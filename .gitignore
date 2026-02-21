@@ -7,6 +7,9 @@
 # Rust / Cargo
 /target
 
+# C++ build output
+cppclient/build/
+
 # OS
 .DS_Store
 Thumbs.db

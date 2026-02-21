@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/user/projects/vault-wolf/cppclient/build/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
