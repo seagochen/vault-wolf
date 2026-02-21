@@ -8,7 +8,7 @@
 #include <sstream>
 #include <climits>
 #include <cfloat>
-#include <platformspecific.h>
+#include "platformspecific.h"
 
 #include "ibwrapper/vault_utils.h"
 

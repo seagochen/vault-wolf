@@ -38,4 +38,7 @@ cmake-build-release/
 # Executables
 *.exe
 *.out
-*.app
+*.appbuild/
+*.o
+*.so
+*.a

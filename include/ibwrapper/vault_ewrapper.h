@@ -188,7 +188,7 @@ private:
     void printBondContractDetailsMsg(const ContractDetails& contractDetails);
     void printContractDetailsIneligibilityReasonList(const IneligibilityReasonListSPtr &ineligibilityReasonList);
 
-private:
+protected:
     //! [socket_declare]
     EReaderOSSignal m_osSignal;
     EClientSocket * const m_pClient;

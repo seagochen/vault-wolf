@@ -20,10 +20,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # CMAKE_BINARY_DIR 指向构建目录 (例如 VaultWolf/build)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib") # for static libraries (.a)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib") # for shared libraries (.so)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin") # for executables
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin") # for executables
 
 message(STATUS "全局库输出目录: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-message(STATUS "全局可执行文件输出目录: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+#message(STATUS "全局可执行文件输出目录: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # --- 构建外部依赖 libbid ---
 set(LIBBID_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirds/IntelRDFPMathLib20U2")
@@ -67,23 +67,29 @@ add_dependencies(bid_imported libbid_external_build)
 add_subdirectory(IBTwsApi)
 
 # --- VaultWolf 主项目代码 ---
-# 添加主项目的头文件目录
-# include_directories(include) # 旧方法，推荐使用 target_include_directories
+# 查找线程库 (required for std::thread)
+find_package(Threads REQUIRED)
 
-# 收集主项目的源文件
-file(GLOB_RECURSE VAULTWOLF_SOURCES
-    "src/*.cpp"
-    # 如果有 main.cpp 直接在 src 目录下，可以这样写，或者明确列出
-    # "src/main.cpp"
+# 收集主项目的源文件 (排除旧的main.cpp，使用新的main_server.cpp)
+file(GLOB VAULTWOLF_IBWRAPPER_SOURCES "src/ibwrapper/*.cpp")
+file(GLOB VAULTWOLF_MANAGER_SOURCES "src/manager/*.cpp")
+file(GLOB VAULTWOLF_WEB_SOURCES "src/web/*.cpp")
+
+set(VAULTWOLF_MAIN_SOURCE "src/main_server.cpp")
+
+# 合并所有源文件
+set(VAULTWOLF_SOURCES
+    ${VAULTWOLF_MAIN_SOURCE}
+    ${VAULTWOLF_IBWRAPPER_SOURCES}
+    ${VAULTWOLF_MANAGER_SOURCES}
+    ${VAULTWOLF_WEB_SOURCES}
 )
 
-if(NOT VAULTWOLF_SOURCES)
-    message(WARNING "在 ${PROJECT_SOURCE_DIR}/src/ 目录中未找到任何 .cpp 源文件。主程序可能无法构建。")
-    # 可以创建一个虚拟的 main.cpp 以便项目至少能配置
-    file(WRITE "${PROJECT_SOURCE_DIR}/src/main.cpp" "int main() { return 0; }\n")
-    set(VAULTWOLF_SOURCES "${PROJECT_SOURCE_DIR}/src/main.cpp")
-    message(STATUS "创建了一个临时的 src/main.cpp 文件。")
-endif()
+message(STATUS "VaultWolf sources:")
+message(STATUS "  Main: ${VAULTWOLF_MAIN_SOURCE}")
+message(STATUS "  IBWrapper sources: ${VAULTWOLF_IBWRAPPER_SOURCES}")
+message(STATUS "  Manager sources: ${VAULTWOLF_MANAGER_SOURCES}")
+message(STATUS "  Web sources: ${VAULTWOLF_WEB_SOURCES}")
 
 # 添加可执行文件目标
 add_executable(VaultWolfApp ${VAULTWOLF_SOURCES})
@@ -105,11 +111,11 @@ target_include_directories(VaultWolfApp
 #     message(WARNING "目标 bid_imported 未找到，twsapi_shared 可能链接失败。")
 # endif()
 
-# 链接 VaultWolfApp 到 IBTwsApi 的共享库
+# 链接 VaultWolfApp 到 IBTwsApi 的共享库和线程库
 # CMake 会自动处理 Debug/Release 后缀 (例如 libtwsapi_sharedd.so 或 libtwsapi_shared.so)
 if(TARGET twsapi_shared)
-    target_link_libraries(VaultWolfApp PRIVATE twsapi_shared)
-    message(STATUS "VaultWolfApp 已链接到 twsapi_shared。")
+    target_link_libraries(VaultWolfApp PRIVATE twsapi_shared Threads::Threads)
+    message(STATUS "VaultWolfApp 已链接到 twsapi_shared 和 Threads。")
 else()
     message(WARNING "目标 twsapi_shared 未找到，VaultWolfApp 可能链接失败。")
 endif()
