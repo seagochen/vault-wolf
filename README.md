@@ -739,7 +739,14 @@ fatal error: EClientSocket.h: No such file or directory
 
 ## 许可证
 
-本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
+本项目采用 GNU General Public License v3.0 (GPLv3) 许可证。详见 [LICENSE](LICENSE) 文件。
+
+这意味着：
+- ✅ 您可以自由使用、修改和分发本软件
+- ✅ 您可以将其用于商业目的
+- ⚠️ 如果您分发修改版本，必须同样以 GPLv3 许可证开源
+- ⚠️ 您必须保留原始版权声明和许可证声明
+- ⚠️ 任何基于本软件的衍生作品也必须采用 GPLv3 许可证
 
 ---
 
