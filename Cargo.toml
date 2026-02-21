@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "vault-wolf-ibapi"]
+resolver = "2"
+
 [package]
 name = "vault-wolf"
 version = "1.0.0"
