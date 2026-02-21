@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: twsclient
+Description: Interactive Brokers TWS API C++ Client Library
+Version: 9.79.02
+Libs: -L${libdir} -ltwsclient
+Cflags: -I${includedir}/twsclient

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "OrderCancel.proto";
+
+message GlobalCancelRequest {
+  optional OrderCancel orderCancel = 1;
+}

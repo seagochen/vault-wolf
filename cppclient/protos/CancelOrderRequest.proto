@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "OrderCancel.proto";
+
+message CancelOrderRequest {
+  optional int32 orderId = 1;
+  optional OrderCancel orderCancel = 2;
+}

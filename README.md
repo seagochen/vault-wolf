@@ -1,12 +1,15 @@
 # VaultWolf Trading API Server
 
-**VaultWolf** 是一个基于 Interactive Brokers (IB) TWS API 的 C++ 交易系统，提供 RESTful Web API 接口，支持股票和期权的实时数据查询、历史数据获取、账户管理和订单操作。
+**VaultWolf** 是一个基于 Interactive Brokers (IB) TWS API 的交易系统，提供 RESTful Web API 接口，支持股票和期权的实时数据查询、历史数据获取、账户管理和订单操作。
+
+> 本项目已从 C++ 迁移至纯 Rust 实现，使用 `ibapi` crate 替代原始 C++ TWS API 客户端。
 
 ## 目录
 
 - [特性](#特性)
 - [系统要求](#系统要求)
-- [安装](#安装)
+- [项目结构](#项目结构)
+- [编译与依赖](#编译与依赖)
 - [配置](#配置)
 - [运行](#运行)
 - [API 文档](#api-文档)
@@ -33,52 +36,116 @@
 - ✅ **订单查询**：查看所有订单、历史订单、订单状态
 
 ### 技术特性
+- ✅ **纯 Rust 实现**：内存安全，无 C++ 依赖
 - ✅ **RESTful API**：标准 HTTP 接口，易于集成
 - ✅ **JSON 格式**：所有响应均为 JSON 格式
-- ✅ **线程安全**：多线程设计，支持并发请求
-- ✅ **自动重连**：自动处理连接断开和重连
+- ✅ **异步运行时**：基于 Tokio 的高并发异步架构
 
 ## 系统要求
 
 ### 软件要求
-- **操作系统**: Linux (Ubuntu 20.04+ 推荐)
-- **编译器**: GCC 7.0+ 或 Clang 5.0+ (支持 C++17)
-- **CMake**: 3.10+
-- **TWS 或 IB Gateway**: Interactive Brokers 交易平台
 
-### 依赖库
-- **IB TWS API**: C++ 客户端库（已包含在项目中）
-- **cpp-httplib**: HTTP 服务器库（已包含）
-- **Intel RDFP Math Library**: 十进制浮点运算库（已包含）
-- **Pthreads**: POSIX 线程库
+| 工具 | 最低版本 | 说明 |
+|------|----------|------|
+| Rust | 1.70+ | 通过 [rustup](https://rustup.rs) 安装 |
+| TWS 或 IB Gateway | 任意 | Interactive Brokers 交易平台 |
 
-## 安装
+### 可选：cppclient C++ 库（独立组件）
 
-### 1. 克隆仓库
+`cppclient/` 目录包含 IB API 的原始 C++ 实现，可独立编译为 `.so`/`.a` 供其他项目使用。编译它需要：
 
-```bash
-git clone https://github.com/yourusername/VaultWolf.git
-cd VaultWolf
+| 工具 | 版本 | 安装 |
+|------|------|------|
+| CMake | 3.16+ | `sudo apt install cmake` |
+| G++ | 7.0+ | `sudo apt install g++` |
+| libprotobuf-dev | 3.x / 4.x | `sudo apt install libprotobuf-dev protobuf-compiler` |
+
+## 项目结构
+
+```
+vault-wolf/
+├── src/
+│   ├── main.rs         # 程序入口，CLI 参数解析，服务启动
+│   ├── manager.rs      # IB 连接管理、数据/账户/订单业务逻辑
+│   ├── models.rs       # 数据模型定义（TickData、Position、OrderInfo 等）
+│   └── web.rs          # Axum HTTP 路由与 API 处理器
+├── cppclient/          # IB TWS API C++ 原始实现（独立组件，可单独编译）
+│   ├── client/         # C++ 源码（EClient、EWrapper 等）
+│   ├── protos/         # Protobuf 协议定义文件（.proto）
+│   ├── cmake/          # CMake 辅助配置
+│   ├── bid64_stub.c    # Intel BID64 十进制浮点软件实现（替代 libbid）
+│   └── CMakeLists.txt  # C++ 库构建文件
+├── Cargo.toml          # Rust 依赖声明
+└── Cargo.lock          # 依赖版本锁定文件
 ```
 
-### 2. 解压依赖库
+## 编译与依赖
+
+### Rust 主项目
+
+Cargo 会自动下载并编译所有 Rust 依赖，**无需手动安装依赖库**。
 
 ```bash
-cd thirds
-tar -xzf IntelRDFPMathLib20U2.tar.gz
-cd ..
+# 安装 Rust 工具链（如未安装）
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+# 编译（Release 模式）
+cargo build --release
+
+# 可执行文件输出至
+# target/release/vault-wolf
 ```
 
-### 3. 编译项目
+**Rust 依赖列表**（由 Cargo 自动管理）：
+
+| crate | 版本 | 用途 |
+|-------|------|------|
+| `ibapi` | 2.7 | IB TWS API 纯 Rust 实现 |
+| `axum` | 0.8 | HTTP Web 框架 |
+| `tokio` | 1 | 异步运行时 |
+| `tower-http` | 0.6 | HTTP 中间件（CORS 等） |
+| `serde` / `serde_json` | 1 | JSON 序列化 |
+| `clap` | 4 | CLI 参数解析 |
+| `chrono` / `time` | 0.4 / 0.3 | 时间处理 |
+| `tracing` / `tracing-subscriber` | 0.1 / 0.3 | 结构化日志 |
+| `ctrlc` | 3 | 优雅退出（Ctrl+C 处理） |
+
+---
+
+### cppclient C++ 库（可选，独立编译）
+
+cppclient 是原始 C++ 实现，编译为 `.so` 和 `.a` 库供需要时使用。
 
 ```bash
-mkdir -p build
-cd build
-cmake ..
-make -j4
+# 首次编译
+mkdir -p cppclient/build
+cd cppclient/build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
 ```
 
-编译成功后，可执行文件 `VaultWolfApp` 将生成在项目根目录下。
+编译产物位于 `cppclient/build/lib/`：
+
+```
+libtwsclient.a          # 静态库（~2.4 MB，含 bid64 stub）
+libtwsclient.so         # 动态库符号链接
+libtwsclient.so.1       # 动态库符号链接
+libtwsclient.so.9.79.02 # 动态库实体（~1.4 MB）
+```
+
+**关于外部依赖处理**：
+
+| 依赖 | 处理方式 |
+|------|----------|
+| Intel BID64 (`libbid`) | 已用 `bid64_stub.c` 纯 C 实现替代，无需下载 Intel 库 |
+| Protobuf | 系统检测；未安装则自动跳过 protobuf 源文件 |
+| Pthreads | 系统标准库，自动检测 |
+
+若需强制使用软件 BID64 实现：
+```bash
+cmake .. -DUSE_LIBBID_STUB=ON
+```
 
 ## 配置
 
@@ -100,16 +167,16 @@ make -j4
 
 ```bash
 # 使用默认参数运行（连接到 localhost:4002）
-./VaultWolfApp
+./target/release/vault-wolf
 
 # 指定 TWS/Gateway 地址和端口
-./VaultWolfApp --ib-host 127.0.0.1 --ib-port 4002
+./target/release/vault-wolf --ib-host 127.0.0.1 --ib-port 4002
 
 # 指定 Web 服务器端口
-./VaultWolfApp --web-port 8080
+./target/release/vault-wolf --web-port 8080
 
 # 完整参数示例
-./VaultWolfApp --ib-host 192.168.1.100 --ib-port 7497 --ib-client-id 1 --web-port 5000
+./target/release/vault-wolf --ib-host 192.168.1.100 --ib-port 7497 --ib-client-id 1 --web-port 5000
 ```
 
 ### 命令行参数
@@ -304,8 +371,7 @@ curl "http://localhost:5000/api/market/historical?symbol=AAPL&duration=5%20D&bar
         "volume": 1234567,
         "barCount": 8923,
         "wap": 449.12
-      },
-      ...
+      }
     ]
   }
 }
@@ -387,8 +453,7 @@ curl "http://localhost:5000/api/account/positions?symbol=SPY"
       "marketValue": 44950.0,
       "unrealizedPNL": 400.0,
       "realizedPNL": 0.0
-    },
-    ...
+    }
   ]
 }
 ```
@@ -544,8 +609,7 @@ curl "http://localhost:5000/api/order/list?symbol=SPY"
       "lastFillPrice": 449.52,
       "submitTime": "2025-11-21 14:30:00",
       "lastUpdateTime": "2025-11-21 14:30:05"
-    },
-    ...
+    }
   ]
 }
 ```
@@ -577,9 +641,7 @@ import requests
 BASE_URL = "http://localhost:5000"
 
 # 1. 获取实时行情
-response = requests.get(f"{BASE_URL}/api/market/realtime", params={
-    "symbol": "SPY"
-})
+response = requests.get(f"{BASE_URL}/api/market/realtime", params={"symbol": "SPY"})
 print(response.json())
 
 # 2. 获取历史数据
@@ -607,7 +669,7 @@ response = requests.post(f"{BASE_URL}/api/order/place", params={
 })
 print(response.json())
 
-# 6. 下限价单
+# 6. 下限价单并撤单
 response = requests.post(f"{BASE_URL}/api/order/place", params={
     "symbol": "AAPL",
     "action": "SELL",
@@ -617,123 +679,82 @@ response = requests.post(f"{BASE_URL}/api/order/place", params={
 })
 order_id = response.json()["data"]["orderId"]
 
-# 7. 查询订单
-response = requests.get(f"{BASE_URL}/api/order/list")
-print(response.json())
-
-# 8. 撤单
-response = requests.post(f"{BASE_URL}/api/order/cancel", params={
-    "order_id": order_id
-})
+response = requests.post(f"{BASE_URL}/api/order/cancel", params={"order_id": order_id})
 print(response.json())
 ```
-
-### curl 示例
-
-详见上述 API 文档中的示例。
 
 ---
 
 ## 架构
-
-### 项目结构
-
-```
-VaultWolf/
-├── include/                    # 头文件目录
-│   ├── common/                 # 公共数据类型和工具
-│   │   ├── data_types.h        # 数据结构定义
-│   │   └── json_helper.h       # JSON 序列化工具
-│   ├── ibwrapper/              # IB API 封装
-│   │   └── vault_ewrapper.h    # IB EWrapper 封装类
-│   ├── manager/                # 业务管理层
-│   │   └── vault_manager.h     # VaultWolfManager 类
-│   └── web/                    # Web 服务层
-│       └── web_server.h        # WebServer 类
-├── src/                        # 源代码目录
-│   ├── ibwrapper/              # IB API 封装实现
-│   ├── manager/                # 业务管理层实现
-│   ├── web/                    # Web 服务层实现
-│   └── main_server.cpp         # 主程序入口
-├── IBTwsApi/                   # IB TWS API 库
-├── thirds/                     # 第三方库
-└── CMakeLists.txt              # CMake 配置文件
-```
 
 ### 系统架构
 
 ```
 用户请求 (HTTP)
        ↓
-HTTP Server (cpp-httplib)
+Axum HTTP Server (async)
        ↓
-API Router & Handler
+API Router & Handler  (src/web.rs)
        ↓
-Manager Layer:
-  - DataManager (实时/历史数据)
-  - OrderManager (订单管理)
-  - AccountManager (账户查询)
+VaultWolfManager      (src/manager.rs)
+  - 市场数据管理
+  - 账户查询
+  - 订单管理
        ↓
-VaultEWrapper (IB API 封装)
+ibapi crate (纯 Rust IB TWS API)
        ↓
-IB TWS/Gateway API
+IB TWS / IB Gateway
 ```
 
 ### 核心模块
 
-1. **VaultWolfManager** (`manager/vault_manager.h`)
-   - 继承自 `VaultEWrapper`
-   - 提供数据存储和查询接口
-   - 线程安全的数据管理
+| 文件 | 职责 |
+|------|------|
+| `src/main.rs` | CLI 参数解析、日志初始化、服务器启动与优雅退出 |
+| `src/manager.rs` | IB 连接管理、市场数据/账户/订单业务逻辑封装 |
+| `src/models.rs` | 数据模型（TickData、Position、OrderInfo 等） |
+| `src/web.rs` | Axum 路由注册与 HTTP 请求处理器 |
 
-2. **WebServer** (`web/web_server.h`)
-   - 基于 cpp-httplib 的 HTTP 服务器
-   - RESTful API 路由
-   - JSON 请求/响应处理
+### cppclient（独立 C++ 组件）
 
-3. **Data Types** (`common/data_types.h`)
-   - 标准化的数据结构
-   - TickData, HistoricalData, OrderInfo, Position 等
+`cppclient/` 保留了 IB TWS API 的完整 C++ 实现，可独立编译为库供需要时使用，**不参与主项目 Rust 编译**。
 
-4. **JSON Helper** (`common/json_helper.h`)
-   - 轻量级 JSON 序列化工具
-   - 无外部依赖
+| 目录/文件 | 说明 |
+|-----------|------|
+| `client/` | IB API C++ 源码（EClient、EWrapper 等） |
+| `protos/` | Protobuf `.proto` 协议定义（21 个消息类型） |
+| `bid64_stub.c` | Intel BID64 十进制浮点软件实现，替代 Intel RDFP 库 |
+| `CMakeLists.txt` | 构建 `libtwsclient.so` 和 `libtwsclient.a` |
 
 ---
 
 ## 故障排除
 
-### 常见问题
-
-**问题 1**: 无法连接到 TWS/Gateway
+**无法连接到 TWS/Gateway**
 
 ```
 Failed to connect to IB TWS/Gateway!
 ```
 
-**解决方案**:
 - 确保 TWS 或 IB Gateway 正在运行
-- 检查 TWS API 设置是否启用
+- 检查 TWS API 设置是否已启用
 - 确认端口号正确（实盘 7497，模拟盘 4002）
 - 检查防火墙设置
 
-**问题 2**: 编译错误
+**cargo 命令找不到**
 
+```bash
+# 安装 rustup 后需要加载环境变量
+source ~/.cargo/env
+# 或重新打开终端
 ```
-fatal error: EClientSocket.h: No such file or directory
+
+**cppclient 编译时 protobuf 未找到**
+
+```bash
+sudo apt install libprotobuf-dev protobuf-compiler
+# 然后重新 cmake
 ```
-
-**解决方案**:
-- 确保 `IBTwsApi` 目录存在
-- 检查 CMake 配置是否正确
-- 重新运行 `cmake ..`
-
-**问题 3**: 运行时崩溃
-
-**解决方案**:
-- 检查 IB API 版本兼容性
-- 确保 libbid.so 已正确编译
-- 查看日志输出定位问题
 
 ---
 
@@ -741,41 +762,21 @@ fatal error: EClientSocket.h: No such file or directory
 
 本项目采用 GNU General Public License v3.0 (GPLv3) 许可证。详见 [LICENSE](LICENSE) 文件。
 
-这意味着：
-- ✅ 您可以自由使用、修改和分发本软件
-- ✅ 您可以将其用于商业目的
-- ⚠️ 如果您分发修改版本，必须同样以 GPLv3 许可证开源
-- ⚠️ 您必须保留原始版权声明和许可证声明
-- ⚠️ 任何基于本软件的衍生作品也必须采用 GPLv3 许可证
+- 您可以自由使用、修改和分发本软件
+- 分发修改版本时，必须同样以 GPLv3 许可证开源
+- 任何基于本软件的衍生作品也必须采用 GPLv3 许可证
 
 ---
 
 ## 免责声明
 
-⚠️ **重要提示**：
-
-1. 本软件仅供学习和研究使用
-2. 使用本软件进行实盘交易需自担风险
-3. 作者不对使用本软件造成的任何损失负责
-4. 请在模拟账户中充分测试后再考虑实盘使用
-5. 请遵守相关法律法规和交易所规则
-
----
-
-## 联系方式
-
-- **作者**: VaultWolf Team
-- **GitHub**: https://github.com/yourusername/VaultWolf
-- **Email**: your.email@example.com
+本软件仅供学习和研究使用。使用本软件进行实盘交易需自担风险，作者不对任何损失负责。请在模拟账户中充分测试后再考虑实盘使用。
 
 ---
 
 ## 致谢
 
 - [Interactive Brokers](https://www.interactivebrokers.com/) - 提供 TWS API
-- [cpp-httplib](https://github.com/yhirose/cpp-httplib) - HTTP 服务器库
-- [Intel RDFP Math Library](https://www.intel.com/) - 十进制浮点运算库
-
----
-
-**Happy Trading! 🚀**
+- [ibapi-rs](https://github.com/wboayue/rust-ibapi) - Rust 版 IB TWS API 实现
+- [Axum](https://github.com/tokio-rs/axum) - Rust HTTP 框架
+- [Tokio](https://tokio.rs/) - Rust 异步运行时
