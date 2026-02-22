@@ -95,7 +95,7 @@ async fn main() {
         args.ib_host, args.ib_port, args.ib_client_id
     );
 
-    if let Err(e) = manager.connect_to_ib(&args.ib_host, args.ib_port, args.ib_client_id) {
+    if let Err(e) = manager.connect_to_ib(&args.ib_host, args.ib_port, args.ib_client_id).await {
         eprintln!("Failed to connect to IB TWS/Gateway!");
         eprintln!("  Error: {e}");
         eprintln!("Please ensure:");
@@ -108,7 +108,7 @@ async fn main() {
     println!("Successfully connected to IB!");
 
     // Show managed accounts
-    let accounts = manager.get_managed_accounts();
+    let accounts = manager.get_managed_accounts().await;
     if !accounts.is_empty() {
         println!("Managed accounts: {}", accounts.join(", "));
     }
@@ -152,7 +152,7 @@ async fn main() {
     println!("Shutting down...");
     {
         let mut m = shared_manager.lock().await;
-        m.disconnect_from_ib();
+        m.disconnect_from_ib().await;
     }
     println!("Shutdown complete. Goodbye!");
 }

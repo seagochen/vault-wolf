@@ -9,8 +9,9 @@ edition = "2021"
 description = "VaultWolf Trading API Server - Interactive Brokers Integration"
 
 [dependencies]
-# IB TWS API - replaces C++ IBTwsApi + IntelRDFPMathLib
-ibapi = { version = "2.7", default-features = false, features = ["sync"] }
+# IB TWS API - self-built Rust native client
+vault-wolf-ibapi = { path = "./vault-wolf-ibapi" }
+rust_decimal = "1"
 
 # Web framework - replaces cpp-httplib
 axum = "0.8"
@@ -26,7 +27,6 @@ clap = { version = "4", features = ["derive"] }
 
 # Utilities
 chrono = { version = "0.4", features = ["serde"] }
-time = { version = "0.3", features = ["formatting", "parsing"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ctrlc = { version = "3", features = ["termination"] }

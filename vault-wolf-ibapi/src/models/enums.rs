@@ -458,11 +458,12 @@ pub enum OptionExerciseType {
 
 /// Use price management algorithm (C++: `enum UsePriceMmgtAlgo` in `Order.h`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[repr(i32)]
 pub enum UsePriceMgmtAlgo {
-    DontUse,
-    Use,
+    DontUse = 0,
+    Use = 1,
     #[default]
-    Default,
+    Default = 2,
 }
 
 /// Trigger method for price conditions and orders (C++: `PriceCondition::Method`).
@@ -489,6 +490,133 @@ pub enum OrderConditionType {
     Execution = 5,
     Volume = 6,
     PercentChange = 7,
+}
+
+// ============================================================================
+// TryFrom<i32> for integer-based enums
+// ============================================================================
+
+impl TryFrom<i32> for Origin {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            0 => Ok(Self::Customer),
+            1 => Ok(Self::Firm),
+            2 => Ok(Self::Unknown),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for AuctionStrategy {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            0 => Ok(Self::Unset),
+            1 => Ok(Self::Match),
+            2 => Ok(Self::Improvement),
+            3 => Ok(Self::Transparent),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for LegOpenClose {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            0 => Ok(Self::Same),
+            1 => Ok(Self::Open),
+            2 => Ok(Self::Close),
+            3 => Ok(Self::Unknown),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for MarketDataType {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            1 => Ok(Self::RealTime),
+            2 => Ok(Self::Frozen),
+            3 => Ok(Self::Delayed),
+            4 => Ok(Self::DelayedFrozen),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for FaDataType {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            1 => Ok(Self::Groups),
+            3 => Ok(Self::Aliases),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for TriggerMethod {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            0 => Ok(Self::Default),
+            1 => Ok(Self::DoubleBidAsk),
+            2 => Ok(Self::Last),
+            3 => Ok(Self::DoubleLast),
+            4 => Ok(Self::BidAsk),
+            7 => Ok(Self::LastOrBidAsk),
+            8 => Ok(Self::MidPoint),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for OrderConditionType {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            1 => Ok(Self::Price),
+            3 => Ok(Self::Time),
+            4 => Ok(Self::Margin),
+            5 => Ok(Self::Execution),
+            6 => Ok(Self::Volume),
+            7 => Ok(Self::PercentChange),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for UsePriceMgmtAlgo {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            0 => Ok(Self::DontUse),
+            1 => Ok(Self::Use),
+            2 => Ok(Self::Default),
+            _ => Err(v),
+        }
+    }
+}
+
+impl TryFrom<i32> for OptionExerciseType {
+    type Error = i32;
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            -1 => Ok(Self::None),
+            1 => Ok(Self::Exercise),
+            2 => Ok(Self::Lapse),
+            3 => Ok(Self::DoNothing),
+            100 => Ok(Self::Assigned),
+            101 => Ok(Self::AutoexerciseClearing),
+            102 => Ok(Self::Expired),
+            103 => Ok(Self::Netting),
+            200 => Ok(Self::AutoexerciseTrading),
+            _ => Err(v),
+        }
+    }
 }
 
 #[cfg(test)]

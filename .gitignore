@@ -14,6 +14,9 @@ cppclient/build/
 .DS_Store
 Thumbs.db
 
+# Project management
+TASKS.md
+
 # Environment
 .env
 .env.local

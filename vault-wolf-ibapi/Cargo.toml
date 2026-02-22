@@ -10,6 +10,11 @@ serde = { version = "1", features = ["derive"] }
 rust_decimal = { version = "1", features = ["serde-with-str"] }
 thiserror = "2"
 tracing = "0.1"
+tokio = { version = "1", features = ["net", "io-util", "macros", "rt", "sync"] }
+bytes = "1"
+prost = "0.12"
 
 [dev-dependencies]
 serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+rust_decimal = "1"

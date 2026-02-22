@@ -198,7 +198,7 @@ async fn handle_realtime_market_data(
     let sec_type = q.sec_type.as_deref().unwrap_or("STK");
 
     let m = mgr.lock().await;
-    match m.get_tick_data(&symbol, sec_type) {
+    match m.get_tick_data(&symbol, sec_type).await {
         Some(td) => ok_json("Market data retrieved", td).into_response(),
         None => err_json(
             &format!("No market data found for symbol: {symbol}"),
@@ -217,8 +217,8 @@ async fn handle_subscribe_market_data(
         return err_json("Missing required parameter: symbol", 400).into_response();
     }
 
-    let m = mgr.lock().await;
-    match m.request_market_data(&spec) {
+    let mut m = mgr.lock().await;
+    match m.request_market_data(&spec).await {
         Ok(req_id) => ok_json(
             "Market data subscription created",
             serde_json::json!({
@@ -241,8 +241,8 @@ async fn handle_unsubscribe_market_data(
         None => return err_json("Missing required parameter: req_id", 400).into_response(),
     };
 
-    let m = mgr.lock().await;
-    m.cancel_market_data(req_id);
+    let mut m = mgr.lock().await;
+    m.cancel_market_data(req_id).await;
     ok_msg("Market data subscription cancelled").into_response()
 }
 
@@ -268,8 +268,8 @@ async fn handle_historical_data(
     let what_to_show = q.what_to_show.as_deref().unwrap_or("TRADES");
     let end_date = q.end_date.as_deref();
 
-    let m = mgr.lock().await;
-    match m.request_historical_data(&spec, end_date, duration, bar_size, what_to_show) {
+    let mut m = mgr.lock().await;
+    match m.request_historical_data(&spec, end_date, duration, bar_size, what_to_show).await {
         Ok((_req_id, hist)) => ok_json("Historical data retrieved", hist).into_response(),
         Err(e) => err_json(&e, 500).into_response(),
     }
@@ -279,11 +279,11 @@ async fn handle_account_summary(
     State(mgr): State<SharedManager>,
     Query(q): Query<AccountQuery>,
 ) -> impl IntoResponse {
-    let m = mgr.lock().await;
-    let _ = m.request_account_summary();
+    let mut m = mgr.lock().await;
+    let _ = m.request_account_summary().await;
 
     let account = q.account.as_deref().unwrap_or("");
-    match m.get_account_summary(account) {
+    match m.get_account_summary(account).await {
         Some(summary) => ok_json("Account summary retrieved", summary).into_response(),
         None => err_json("No account summary available", 404).into_response(),
     }
@@ -293,16 +293,16 @@ async fn handle_positions(
     State(mgr): State<SharedManager>,
     Query(q): Query<PositionQuery>,
 ) -> impl IntoResponse {
-    let m = mgr.lock().await;
-    let _ = m.request_positions();
+    let mut m = mgr.lock().await;
+    let _ = m.request_positions().await;
 
     let positions = if let Some(account) = &q.account {
-        m.get_positions_by_account(account)
+        m.get_positions_by_account(account).await
     } else if let Some(symbol) = &q.symbol {
         let sec_type = q.sec_type.as_deref().unwrap_or("STK");
-        m.get_positions_by_symbol(symbol, sec_type)
+        m.get_positions_by_symbol(symbol, sec_type).await
     } else {
-        m.get_all_positions()
+        m.get_all_positions().await
     };
 
     ok_json("Positions retrieved", positions).into_response()
@@ -337,9 +337,9 @@ async fn handle_place_order(
         ..Default::default()
     };
 
-    let m = mgr.lock().await;
+    let mut m = mgr.lock().await;
     let result = match order_type {
-        "MKT" => m.place_market_order(&spec, &action, quantity),
+        "MKT" => m.place_market_order(&spec, &action, quantity).await,
         "LMT" => {
             let price = match body.limit_price {
                 Some(p) => p,
@@ -348,7 +348,7 @@ async fn handle_place_order(
                         .into_response()
                 }
             };
-            m.place_limit_order(&spec, &action, quantity, price)
+            m.place_limit_order(&spec, &action, quantity, price).await
         }
         "STP" => {
             let price = match body.stop_price {
@@ -358,7 +358,7 @@ async fn handle_place_order(
                         .into_response()
                 }
             };
-            m.place_stop_order(&spec, &action, quantity, price)
+            m.place_stop_order(&spec, &action, quantity, price).await
         }
         _ => return err_json("Invalid order type. Supported: MKT, LMT, STP", 400).into_response(),
     };
@@ -388,8 +388,8 @@ async fn handle_cancel_order(
         None => return err_json("Missing required parameter: order_id", 400).into_response(),
     };
 
-    let m = mgr.lock().await;
-    match m.cancel_order(order_id) {
+    let mut m = mgr.lock().await;
+    match m.cancel_order(order_id).await {
         Ok(()) => ok_msg("Order cancellation requested").into_response(),
         Err(e) => err_json(&e, 500).into_response(),
     }
@@ -416,12 +416,12 @@ async fn handle_get_orders(
     let m = mgr.lock().await;
 
     let orders = if let Some(status) = &q.status {
-        m.get_orders_by_status(status)
+        m.get_orders_by_status(status).await
     } else if let Some(symbol) = &q.symbol {
         let sec_type = q.sec_type.as_deref().unwrap_or("STK");
-        m.get_orders_by_symbol(symbol, sec_type)
+        m.get_orders_by_symbol(symbol, sec_type).await
     } else {
-        m.get_all_orders()
+        m.get_all_orders().await
     };
 
     ok_json("Orders retrieved", orders).into_response()
@@ -432,7 +432,7 @@ async fn handle_get_order(
     Path(id): Path<i64>,
 ) -> impl IntoResponse {
     let m = mgr.lock().await;
-    match m.get_order(id) {
+    match m.get_order(id).await {
         Some(order) => ok_json("Order retrieved", order).into_response(),
         None => err_json("Order not found", 404).into_response(),
     }
