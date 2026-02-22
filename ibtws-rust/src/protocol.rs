@@ -1,6 +1,6 @@
 //! IB TWS API protocol constants.
 //!
-//! Ported from `cppclient/client/EDecoder.h`, `EClient.h`, `EWrapper.h`,
+//! Ported from `ibtws-cpp/client/EDecoder.h`, `EClient.h`, `EWrapper.h`,
 //! and `CommonDefs.h`. These constants define the binary wire protocol between
 //! the client and TWS/Gateway.
 

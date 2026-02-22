@@ -1,6 +1,6 @@
 //! Contract-related data structures.
 //!
-//! Ported from: `cppclient/client/Contract.h`.
+//! Ported from: `ibtws-cpp/client/Contract.h`.
 
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};

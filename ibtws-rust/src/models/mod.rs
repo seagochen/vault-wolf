@@ -1,6 +1,6 @@
 //! IB API data structures.
 //!
-//! Ported from the C++ TWS API header files in `cppclient/client/`.
+//! Ported from the C++ TWS API header files in `ibtws-cpp/client/`.
 
 pub mod bar;
 pub mod common;

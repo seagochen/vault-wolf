@@ -1,4 +1,4 @@
-//! Error types for the vault-wolf-ibapi library.
+//! Error types for the ibtws-rust library.
 
 use thiserror::Error;
 

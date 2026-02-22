@@ -1,6 +1,6 @@
 //! VaultWolf Manager — high-level wrapper around the IB TWS API.
 //!
-//! Uses `vault-wolf-ibapi` (our Rust-native IB API client) with an async
+//! Uses `ibtws-rust` (our Rust-native IB API client) with an async
 //! event-driven architecture. A background event processor task reads
 //! `IBEvent`s from the client channel and updates shared state, while
 //! request methods send commands and await responses via oneshot channels.
@@ -14,7 +14,7 @@ use rust_decimal::prelude::ToPrimitive;
 use tokio::sync::{mpsc, oneshot, Mutex};
 use tokio::task::JoinHandle;
 
-use vault_wolf_ibapi::{
+use ibtws_rust::{
     Action, Contract, IBClient, IBEvent, Order, OrderCancel, OrderType, Right, SecType, TickType,
 };
 

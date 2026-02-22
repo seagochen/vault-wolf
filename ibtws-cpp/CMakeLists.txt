@@ -94,8 +94,8 @@ else()
         message(STATUS
             "Intel libbid not found — using built-in software BID64 stub.\n"
             "  To use the Intel library instead:\n"
-            "    1. Follow instructions in cppclient/Intel_lib_build.txt\n"
-            "    2. Copy libbid.a (or libbid.so) to cppclient/client/lib/\n"
+            "    1. Follow instructions in ibtws-cpp/Intel_lib_build.txt\n"
+            "    2. Copy libbid.a (or libbid.so) to ibtws-cpp/client/lib/\n"
             "    3. Re-run cmake"
         )
     else()

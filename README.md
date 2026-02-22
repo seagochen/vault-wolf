@@ -2,7 +2,7 @@
 
 **VaultWolf** 是一个基于 Interactive Brokers (IB) TWS API 的交易系统，提供 RESTful Web API 接口，支持股票和期权的实时数据查询、历史数据获取、账户管理和订单操作。
 
-> 本项目已从 C++ 迁移至纯 Rust 实现，使用 `ibapi` crate 替代原始 C++ TWS API 客户端。
+> 本项目已从 C++ 迁移至纯 Rust 实现，使用自建的 `ibtws-rust` crate 替代原始 C++ TWS API 客户端。
 
 ## 目录
 
@@ -50,9 +50,9 @@
 | Rust | 1.70+ | 通过 [rustup](https://rustup.rs) 安装 |
 | TWS 或 IB Gateway | 任意 | Interactive Brokers 交易平台 |
 
-### 可选：cppclient C++ 库（独立组件）
+### 可选：ibtws-cpp C++ 库（独立组件）
 
-`cppclient/` 目录包含 IB API 的原始 C++ 实现，可独立编译为 `.so`/`.a` 供其他项目使用。编译它需要：
+`ibtws-cpp/` 目录包含 IB API 的原始 C++ 实现，可独立编译为 `.so`/`.a` 供其他项目使用。编译它需要：
 
 | 工具 | 版本 | 安装 |
 |------|------|------|
@@ -69,13 +69,24 @@ vault-wolf/
 │   ├── manager.rs      # IB 连接管理、数据/账户/订单业务逻辑
 │   ├── models.rs       # 数据模型定义（TickData、Position、OrderInfo 等）
 │   └── web.rs          # Axum HTTP 路由与 API 处理器
-├── cppclient/          # IB TWS API C++ 原始实现（独立组件，可单独编译）
+├── ibtws-rust/         # 自建 Rust 原生 IB TWS API 客户端库
+│   ├── src/
+│   │   ├── client.rs   # IBClient（异步连接、80+ 请求方法）
+│   │   ├── wrapper.rs  # IBEvent enum（113 种服务器回调事件）
+│   │   ├── decoder.rs  # 消息解码（66 种入站消息 + protobuf）
+│   │   ├── encoder.rs  # 消息编码（null-terminated ASCII 协议）
+│   │   ├── transport.rs # TCP 传输层（V100+ 握手、帧读写）
+│   │   ├── reader.rs   # 异步消息读取器
+│   │   ├── protocol.rs # 协议常量（450+ 版本号、消息 ID）
+│   │   └── models/     # 数据类型（Contract、Order、Bar 等 30+ struct）
+│   └── tests/          # 集成测试（需 TWS 连接）
+├── ibtws-cpp/          # IB TWS API C++ 原始实现（独立组件，可单独编译）
 │   ├── client/         # C++ 源码（EClient、EWrapper 等）
 │   ├── protos/         # Protobuf 协议定义文件（.proto）
 │   ├── cmake/          # CMake 辅助配置
 │   ├── bid64_stub.c    # Intel BID64 十进制浮点软件实现（替代 libbid）
 │   └── CMakeLists.txt  # C++ 库构建文件
-├── Cargo.toml          # Rust 依赖声明
+├── Cargo.toml          # Rust 依赖声明（workspace）
 └── Cargo.lock          # 依赖版本锁定文件
 ```
 
@@ -101,31 +112,31 @@ cargo build --release
 
 | crate | 版本 | 用途 |
 |-------|------|------|
-| `ibapi` | 2.7 | IB TWS API 纯 Rust 实现 |
+| `ibtws-rust` | 0.1 | IB TWS API 纯 Rust 实现（自建） |
 | `axum` | 0.8 | HTTP Web 框架 |
 | `tokio` | 1 | 异步运行时 |
 | `tower-http` | 0.6 | HTTP 中间件（CORS 等） |
 | `serde` / `serde_json` | 1 | JSON 序列化 |
 | `clap` | 4 | CLI 参数解析 |
-| `chrono` / `time` | 0.4 / 0.3 | 时间处理 |
+| `chrono` | 0.4 | 时间处理 |
 | `tracing` / `tracing-subscriber` | 0.1 / 0.3 | 结构化日志 |
 | `ctrlc` | 3 | 优雅退出（Ctrl+C 处理） |
 
 ---
 
-### cppclient C++ 库（可选，独立编译）
+### ibtws-cpp C++ 库（可选，独立编译）
 
-cppclient 是原始 C++ 实现，编译为 `.so` 和 `.a` 库供需要时使用。
+ibtws-cpp 是原始 C++ 实现，编译为 `.so` 和 `.a` 库供需要时使用。
 
 ```bash
 # 首次编译
-mkdir -p cppclient/build
-cd cppclient/build
+mkdir -p ibtws-cpp/build
+cd ibtws-cpp/build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 ```
 
-编译产物位于 `cppclient/build/lib/`：
+编译产物位于 `ibtws-cpp/build/lib/`：
 
 ```
 libtwsclient.a          # 静态库（~2.4 MB，含 bid64 stub）
@@ -701,7 +712,7 @@ VaultWolfManager      (src/manager.rs)
   - 账户查询
   - 订单管理
        ↓
-ibapi crate (纯 Rust IB TWS API)
+ibtws-rust crate (自建 Rust IB TWS API)
        ↓
 IB TWS / IB Gateway
 ```
@@ -715,9 +726,9 @@ IB TWS / IB Gateway
 | `src/models.rs` | 数据模型（TickData、Position、OrderInfo 等） |
 | `src/web.rs` | Axum 路由注册与 HTTP 请求处理器 |
 
-### cppclient（独立 C++ 组件）
+### ibtws-cpp（独立 C++ 组件）
 
-`cppclient/` 保留了 IB TWS API 的完整 C++ 实现，可独立编译为库供需要时使用，**不参与主项目 Rust 编译**。
+`ibtws-cpp/` 保留了 IB TWS API 的完整 C++ 实现，可独立编译为库供需要时使用，**不参与主项目 Rust 编译**。
 
 | 目录/文件 | 说明 |
 |-----------|------|
@@ -749,7 +760,7 @@ source ~/.cargo/env
 # 或重新打开终端
 ```
 
-**cppclient 编译时 protobuf 未找到**
+**ibtws-cpp 编译时 protobuf 未找到**
 
 ```bash
 sudo apt install libprotobuf-dev protobuf-compiler

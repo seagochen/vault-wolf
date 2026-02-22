@@ -1,6 +1,6 @@
 //! Execution and commission data structures.
 //!
-//! Ported from: `cppclient/client/Execution.h`, `CommissionAndFeesReport.h`.
+//! Ported from: `ibtws-cpp/client/Execution.h`, `CommissionAndFeesReport.h`.
 
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};

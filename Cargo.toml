@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "vault-wolf-ibapi"]
+members = [".", "ibtws-rust"]
 resolver = "2"
 
 [package]
@@ -10,7 +10,7 @@ description = "VaultWolf Trading API Server - Interactive Brokers Integration"
 
 [dependencies]
 # IB TWS API - self-built Rust native client
-vault-wolf-ibapi = { path = "./vault-wolf-ibapi" }
+ibtws-rust = { path = "./ibtws-rust" }
 rust_decimal = "1"
 
 # Web framework - replaces cpp-httplib

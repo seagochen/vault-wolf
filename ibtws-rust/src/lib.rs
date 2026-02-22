@@ -1,4 +1,4 @@
-//! vault-wolf-ibapi -- Rust native Interactive Brokers TWS API client library.
+//! ibtws-rust -- Rust native Interactive Brokers TWS API client library.
 //!
 //! This crate provides a complete port of the C++ IB TWS API, including all
 //! data structures, protocol constants, and error types. It is designed as the

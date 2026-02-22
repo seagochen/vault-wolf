@@ -8,7 +8,7 @@
 /target
 
 # C++ build output
-cppclient/build/
+ibtws-cpp/build/
 
 # OS
 .DS_Store

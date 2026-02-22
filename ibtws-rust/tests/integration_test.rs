@@ -1,10 +1,10 @@
-//! Integration tests for vault-wolf-ibapi.
+//! Integration tests for ibtws-rust.
 //!
 //! These tests require a running IB TWS/Gateway instance (Paper Trading recommended).
 //! They are ignored by default and can be run with:
 //!
 //! ```bash
-//! cargo test -p vault-wolf-ibapi --test integration_test -- --ignored
+//! cargo test -p ibtws-rust --test integration_test -- --ignored
 //! ```
 //!
 //! Configuration via environment variables:
@@ -13,7 +13,7 @@
 //!   IB_CLIENT  (default: 100)
 
 use std::time::Duration;
-use vault_wolf_ibapi::{
+use ibtws_rust::{
     Contract, IBClient, IBEvent, OrderType, SecType, Action, Order, OrderCancel,
 };
 

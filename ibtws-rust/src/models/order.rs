@@ -1,6 +1,6 @@
 //! Order-related data structures and the `OrderCondition` enum.
 //!
-//! Ported from: `cppclient/client/Order.h`, `OrderState.h`, `OrderCancel.h`,
+//! Ported from: `ibtws-cpp/client/Order.h`, `OrderState.h`, `OrderCancel.h`,
 //! `OrderCondition.h`, and all condition subtypes (`PriceCondition.h`,
 //! `TimeCondition.h`, `MarginCondition.h`, `VolumeCondition.h`,
 //! `PercentChangeCondition.h`, `ExecutionCondition.h`).
